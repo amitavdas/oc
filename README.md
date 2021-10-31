@@ -9,13 +9,13 @@ as defined by `WCAG 2.0`.
 
 Nothing is Guaranteed to work. See License.
 
-**Only the colors in terminal's colour palette from `16 to 255` is considered.**
+**Only the colors in terminal's colour palette from** `16 to 255` **is considered.**
 
 It uses the terminal's colour palette for this task.\
 So it takes a background colour e.g. `./oc 200` or `./oc 1d1f21` and then\
 prints suitable colours from `16 to 255`.
 
-**Background color can be 16 to 255** in terminal's colour palette.\
+**Background color can be** `16 to 255` in terminal's colour palette.\
 Additionaly **RGB hex vaule as background colour can be used**.\
 This is because many terminal emulators support setting custom background color.
 
