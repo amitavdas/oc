@@ -1,5 +1,6 @@
-oc
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
+oc\
 Optimum Colour
 
 This is a very small program written in python that should print best suited\
