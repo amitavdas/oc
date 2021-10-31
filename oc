@@ -47,15 +47,14 @@
 #  POSSIBILITY OF SUCH DAMAGE.                                                 #
 #                                                                              #
 ################################################################################
- 
 
 import os
 import curses
 import sys
 
-# bcs -> basic color separator
+# bcs -> basic colour separator
 def bcs(ic):
-    # ic -> input color
+    # ic -> input colour
     # source: https://stackoverflow.com/a/27165165 
     r_index = ((ic - 16) // 36)
     r_rgb = 55 + r_index * 40 if r_index > 0 else 0
@@ -68,7 +67,7 @@ def bcs(ic):
 
     return [r_rgb, g_rgb, b_rgb]
 
-# pco -> process color
+# pco -> process colour
 def pco(ic):
     if (ic >= 16 and ic <= 231):
         result = bcs(ic)
@@ -85,7 +84,7 @@ def cgl(iv):
 
     # source: https://stackoverflow.com/a/56678483
     # sRGB (computer standard) for instance requires a power curve of
-    # approximately V^2.2, though the "accurate" transform is iv/12.92 when iv
+    # approximately iv^2.2, though the "accurate" transform is iv/12.92 when iv
     # is less than 0.04045, or ((iv + 0.055)/1.055)^2.4 when iv is grater than
     # 0.04045
     # iv = gamma-encoded R, G, or B channel of sRGB.
@@ -108,7 +107,7 @@ def lcalc(brgb):
     lum = 0.212655 * cgl(tr) + 0.715158 * cgl(tg) + 0.072187 * cgl(tb)
     return lum
 
-# cc -> color comparator
+# cc -> colour comparator
 def cc(c_fg, c_bg):
     bg_rgb = pco(c_bg)
     fg_rgb = pco(c_fg)
@@ -154,14 +153,14 @@ def main(stdscr):
         # Note: WCAG 2.0 requires the visual presentation of text
         # and images of text has a contrast ratio of at least 4.5:1 
         # Source: http://www.w3.org/TR/WCAG20/#contrast-ratiodef
-        # this is the lower and upper bounds for selected colors
-        # i.e. the colors that will be shown as output
+        # this is the lower and upper bounds for contrast ratio of
+        # the colours that will be printed
         if ((4.5 <= result) and (7 >= result)):
              curses.init_pair(index, fg, -1)
-             # loc -> list of colors
+             # loc -> list of colours
              loc.append(fg)
     try:
-        stdscr.addstr("Normal 16 to 231 colors:")
+        stdscr.addstr("Normal 16 to 231 colours:")
         stdscr.refresh()
         ypos = curses.getsyx()[0]
         stdscr.move(ypos + 1, 0)
