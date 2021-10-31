@@ -6,15 +6,14 @@ Optimum Colour
 This is a very small program written in python that should print best suited\
 foreground colours for a terminal with specific background colour.
 
-This uses the 256 colour terminal colour codes for this task.\
-So it takes a background colour e.g. `./oc 200` and then prints suitable colours\
-from 16-255.
+It uses the terminal's colour palette for this task.\
+So it takes a background colour e.g. `./oc 200` or `./oc 1d1f21` and then\
+prints suitable colours from 16 to 255.
 
-Currently the input background colour has to be within 16 to 231.\
-Support for RGB background colours should be added.
-
-It has been configured to use contrast ratio within 4.5 to 7 as acceptable by\
+It has been configured to use contrast ratio within 4.5 to 7 by\
 default.
+At least 4.5 is recommended.
+Source: http://www.w3.org/TR/WCAG20/#contrast-ratiodef
 
 ```
 usage: oc [-h] [--crl crl] [--crh crh] bg
