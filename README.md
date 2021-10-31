@@ -3,8 +3,7 @@ oc
 Optimum Colour
 
 This is a very small program written in python that should print best suited\
-foreground colours for a terminal with specific background colour within 16 to\
-231 terminal colour palettes.
+foreground colours for a terminal with specific background colour.
 
 This uses the 256 colour terminal colour codes for this task.\
 So it takes a background colour e.g. `./oc 200` and then prints suitable colours\
