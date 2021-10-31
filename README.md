@@ -13,7 +13,7 @@ Currently the input background colour has to be within 16 to 231.\
 Support for RGB background colours should be added.
 
 It has been configured to use contrast ratio within 4.5 to 7 as acceptable by\
-default.\
+default.
 
 ```
 usage: oc [-h] [--crl crl] [--crh crh] bg
@@ -25,6 +25,6 @@ positional arguments:
 
 optional arguments:
   -h, --help  show this help message and exit
-  --crl crl   lower limit of contrast ratio to be used
-  --crh crh   upper limit of contrast ratio to be used
+  --crl crl   lower limit of contrast ratio to be used, 4.5 recommend (default)
+  --crh crh   upper limit of contrast ratio to be used, default 7, must be grater than crl
 ```
