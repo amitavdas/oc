@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+
+################################################################################
+#                                                                              #
+#    ___       ___  ________  _______   ________   _________   _______         #
+#   |\  \     |\  \|\   ____\|\   ___\ |\   ___  \|\   _____\ |\   ___\        #
+#   \ \  \    \ \  \ \  \___|\ \  \__|_\ \  \\ \  \ \  \____| \ \  \__|_       #
+#    \ \  \    \ \  \ \  \    \ \  \___\\ \  \\ \  \ \_____  \ \ \  \___\      #
+#     \ \  \____\ \  \ \  \____\ \  \__|_\ \  \\ \  \|____|\  \ \ \  \__|_     #
+#      \ \_______\ \__\ \_______\ \______\\ \__\\ \__\____\_\  \ \ \______\    #
+#       \|_______|\|__|\|_______|\|_______|\|__| \|__|\_________\ \|_______|   #
+#                                                    \|_________|              #
+#                                                                              #
+################################################################################
+#                                                                              #
+#                             BSD 3-Clause License                             #
+#                                                                              #
+#                         Copyright (c) 2021, Ragnarov                         #
+#                             All rights reserved.                             #
+#                                                                              #
+#  Redistribution and use in source and binary forms, with or without          #
+#  modification, are permitted provided that the following conditions are      #
+#  met:                                                                        #
+#                                                                              #
+#      (1) Redistributions of source code must retain the above copyright      #
+#      notice, this list of conditions and the following disclaimer.           #
+#                                                                              #
+#      (2) Redistributions in binary form must reproduce the above copyright   #
+#      notice, this list of conditions and the following disclaimer in         #
+#      the documentation and/or other materials provided with the              #
+#      distribution.                                                           #
+#                                                                              #
+#      (3) The name of the author may not be used to                           #
+#      endorse or promote products derived from this software without          #
+#      specific prior written permission.                                      #
+#                                                                              #
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR          #
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED              #
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE      #
+#  DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,          #
+#  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES          #
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR          #
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)          #
+#  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,         #
+#  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING       #
+#  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE          #
+#  POSSIBILITY OF SUCH DAMAGE.                                                 #
+#                                                                              #
+################################################################################
+ 
+
+import os
+import curses
+import sys
+
+# bcs -> basic color separator
+def bcs(ic):
+    # ic -> input color
+    # source: https://stackoverflow.com/a/27165165 
+    r_index = ((ic - 16) // 36)
+    r_rgb = 55 + r_index * 40 if r_index > 0 else 0
+
+    g_index = (((ic - 16) % 36) // 6)
+    g_rgb = 55 + g_index * 40 if g_index > 0 else 0
+
+    b_index = ((ic - 16) % 6)
+    b_rgb = 55 + b_index * 40 if b_index > 0 else 0
+
+    return [r_rgb, g_rgb, b_rgb]
+
+# pco -> process color
+def pco(ic):
+    if (ic >= 16 and ic <= 231):
+        result = bcs(ic)
+    elif  (ic > 231):
+        temp = (ic - 232) * 10 + 8
+        result = [temp, temp, temp] 
+
+    return result
+
+
+# Convert a Gamma encoded RGB to a Linear value
+# iv -> input value
+def cgl(iv):
+
+    # source: https://stackoverflow.com/a/56678483
+    # sRGB (computer standard) for instance requires a power curve of
+    # approximately V^2.2, though the "accurate" transform is iv/12.92 when iv
+    # is less than 0.04045, or ((iv + 0.055)/1.055)^2.4 when iv is grater than
+    # 0.04045
+    # iv = gamma-encoded R, G, or B channel of sRGB.
+    # see also: https://www.w3.org/Graphics/Color/sRGB.html
+    if (iv <= 0.04045):
+        result = (iv/12.92)
+    else:
+        result = (pow((( iv + 0.055)/1.055),2.4))
+    return result
+
+
+# lcalc -> luminance (Y) calculator
+# luminance and Perceived lightness are NOT the same
+# 8 bit sRGB = byte sRGB = brgb
+def lcalc(brgb):
+    tr = brgb[0]/255
+    tg = brgb[1]/255
+    tb = brgb[2]/255
+
+    lum = 0.212655 * cgl(tr) + 0.715158 * cgl(tg) + 0.072187 * cgl(tb)
+    return lum
+
+# cc -> color comparator
+def cc(c_fg, c_bg):
+    bg_rgb = pco(c_bg)
+    fg_rgb = pco(c_fg)
+
+
+
+    # print(f"bg: ({bg_rgb[0]:03d}, {bg_rgb[1]:03d}, {bg_rgb[2]:03d}) -> #{bg_rgb[0]:02x}{bg_rgb[1]:02x}{bg_rgb[2]:02x} ")
+    # print(f"fg: ({fg_rgb[0]:03d}, {fg_rgb[1]:03d}, {fg_rgb[2]:03d}) -> #{fg_rgb[0]:02x}{fg_rgb[1]:02x}{fg_rgb[2]:02x} ")
+
+
+    # Caluclate luminance for fg and bg
+    Y_bg = lcalc(bg_rgb)
+    Y_fg = lcalc(fg_rgb)
+
+    Y_b = 0
+    Y_d = 0
+    if (Y_bg >= Y_fg):
+        Y_b = Y_bg
+        Y_d = Y_fg
+    else:
+        Y_b = Y_fg
+        Y_d = Y_bg
+
+    # print(f"{Y_b} {Y_d}")
+    result = (Y_b + 0.05) / (Y_d + 0.05)
+
+    return result
+
+
+def main(stdscr):
+    # Clear screen
+    curses.use_default_colors()
+    stdscr.clear()
+    stdscr.leaveok(False)
+
+#    stdscr.addstr('Hello World!')
+
+    bg = int(sys.argv[1])
+    loc = []
+    for index in range(16,256):
+        fg = index
+        result = cc(fg, bg)
+        # Note: WCAG 2.0 requires the visual presentation of text
+        # and images of text has a contrast ratio of at least 4.5:1 
+        # Source: http://www.w3.org/TR/WCAG20/#contrast-ratiodef
+        # this is the lower and upper bounds for selected colors
+        # i.e. the colors that will be shown as output
+        if ((4.5 <= result) and (7 >= result)):
+             curses.init_pair(index, fg, -1)
+             # loc -> list of colors
+             loc.append(fg)
+    try:
+        stdscr.addstr("Normal 16 to 231 colors:")
+        stdscr.refresh()
+        ypos = curses.getsyx()[0]
+        stdscr.move(ypos + 1, 0)
+        for i in loc:
+            xpos = curses.getsyx()[1]
+            if (xpos > ((curses.COLS//6)*6)-6):
+                ypos = curses.getsyx()[0]
+                stdscr.move(ypos + 1, 0)
+            stdscr.addstr(f"{i:3d}   ", curses.color_pair(i))
+            stdscr.refresh()
+    except curses.ERR:
+        # End of screen reached
+        pass
+
+    pk = "not q"
+    while("q" != pk):
+        pk = stdscr.getkey()
+
+
+
+if __name__ == "__main__":
+    curses.wrapper(main)
+
+# Legacy code
+
+#def main():
+#    print("Pass if above 4.5 for (12pt or smaller) or 3.0 (for larger)")
+#    # print("Contrast ratio: ", result)
+#    for fg in range(16,256):
+#        result = cc(fg, 234)
+#        if ((4.5 <= result) and (7 >= result)):
+#            #print(f"{fg:03d}. Contrast ratio: {result:.02f}")
+#            fg_str = str(fg)
+#            cmd = 'printf \'%s\' \"    $(tput setaf ' + fg_str + ') ' + fg_str + '\"'
+#            os.system(cmd)
+
