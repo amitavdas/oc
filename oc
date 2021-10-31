@@ -1,58 +1,10 @@
 #!/usr/bin/env python3
 
-################################################################################
-#                                                                              #
-#    ___       ___  ________  _______   ________   _________   _______         #
-#   |\  \     |\  \|\   ____\|\   ___\ |\   ___  \|\   _____\ |\   ___\        #
-#   \ \  \    \ \  \ \  \___|\ \  \__|_\ \  \\ \  \ \  \____| \ \  \__|_       #
-#    \ \  \    \ \  \ \  \    \ \  \___\\ \  \\ \  \ \_____  \ \ \  \___\      #
-#     \ \  \____\ \  \ \  \____\ \  \__|_\ \  \\ \  \|____|\  \ \ \  \__|_     #
-#      \ \_______\ \__\ \_______\ \______\\ \__\\ \__\____\_\  \ \ \______\    #
-#       \|_______|\|__|\|_______|\|_______|\|__| \|__|\_________\ \|_______|   #
-#                                                    \|_________|              #
-#                                                                              #
-################################################################################
-#                                                                              #
-#                             BSD 3-Clause License                             #
-#                                                                              #
-#                         Copyright (c) 2021, Ragnarov                         #
-#                             All rights reserved.                             #
-#                                                                              #
-#  Redistribution and use in source and binary forms, with or without          #
-#  modification, are permitted provided that the following conditions are      #
-#  met:                                                                        #
-#                                                                              #
-#      (1) Redistributions of source code must retain the above copyright      #
-#      notice, this list of conditions and the following disclaimer.           #
-#                                                                              #
-#      (2) Redistributions in binary form must reproduce the above copyright   #
-#      notice, this list of conditions and the following disclaimer in         #
-#      the documentation and/or other materials provided with the              #
-#      distribution.                                                           #
-#                                                                              #
-#      (3) The name of the author may not be used to                           #
-#      endorse or promote products derived from this software without          #
-#      specific prior written permission.                                      #
-#                                                                              #
-#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR          #
-#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED              #
-#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE      #
-#  DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,          #
-#  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES          #
-#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR          #
-#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)          #
-#  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,         #
-#  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING       #
-#  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE          #
-#  POSSIBILITY OF SUCH DAMAGE.                                                 #
-#                                                                              #
-################################################################################
-
-import os
+import argparse
 import curses
-import sys
 
 # bcs -> basic colour separator
+# converts palettes colors to 8 bit RGB
 def bcs(ic):
     # ic -> input colour
     # source: https://stackoverflow.com/a/27165165 
@@ -68,6 +20,8 @@ def bcs(ic):
     return [r_rgb, g_rgb, b_rgb]
 
 # pco -> process colour
+# cause gray i.e. >231 needs special treatment
+# source: https://stackoverflow.com/a/27165165 
 def pco(ic):
     if (ic >= 16 and ic <= 231):
         result = bcs(ic)
@@ -108,15 +62,7 @@ def lcalc(brgb):
     return lum
 
 # cc -> colour comparator
-def cc(c_fg, c_bg):
-    bg_rgb = pco(c_bg)
-    fg_rgb = pco(c_fg)
-
-
-
-    # print(f"bg: ({bg_rgb[0]:03d}, {bg_rgb[1]:03d}, {bg_rgb[2]:03d}) -> #{bg_rgb[0]:02x}{bg_rgb[1]:02x}{bg_rgb[2]:02x} ")
-    # print(f"fg: ({fg_rgb[0]:03d}, {fg_rgb[1]:03d}, {fg_rgb[2]:03d}) -> #{fg_rgb[0]:02x}{fg_rgb[1]:02x}{fg_rgb[2]:02x} ")
-
+def cc(bg_rgb, fg_rgb):
 
     # Caluclate luminance for fg and bg
     Y_bg = lcalc(bg_rgb)
@@ -136,53 +82,107 @@ def cc(c_fg, c_bg):
 
     return result
 
+# nline -> goes to next line at column 0
+def nline(stdscr):
+    ypos = curses.getsyx()[0]
+    stdscr.move(ypos + 1, 0)
 
-def main(stdscr):
+def cpu(stdscr, ibgc, arg_crl, arg_crh):
+
+    try:
+        int_bg = int(ibgc)
+    except ValueError:
+        int_bg = int(ibgc, 16)
+
+
+    if ((int_bg >= 16) and (int_bg <= 255)):
+        bg_rgb = pco(int_bg)
+        bg = int_bg
+    elif (int_bg > 255):
+        r = int(ibgc[0:2], 16)
+        g = int(ibgc[2:4], 16)
+        b = int(ibgc[4:],  16)
+        bg_rgb = [r, g, b]
+        bg = -1 # the preferred color may not be showable
+
+
     # Clear screen
     curses.use_default_colors()
     stdscr.clear()
-    stdscr.leaveok(False)
 
-#    stdscr.addstr('Hello World!')
-
-    bg = int(sys.argv[1])
     loc = []
+    tprev = 0.0
     for index in range(16,256):
         fg = index
-        result = cc(fg, bg)
+        fg_rgb = pco(fg)
+        result = cc(bg_rgb, fg_rgb)
         # Note: WCAG 2.0 requires the visual presentation of text
         # and images of text has a contrast ratio of at least 4.5:1 
         # Source: http://www.w3.org/TR/WCAG20/#contrast-ratiodef
         # this is the lower and upper bounds for contrast ratio of
         # the colours that will be printed
-        if ((4.5 <= result) and (7 >= result)):
-             curses.init_pair(index, fg, -1)
-             # loc -> list of colours
-             loc.append(fg)
-    try:
-        stdscr.addstr("Normal 16 to 231 colours:")
+        if ((arg_crl <= result) and (arg_crh >= result)):
+            curses.init_pair(index, fg, bg)
+            # loc -> list of colours
+            if (result <= tprev): # put the color with highest
+                loc.append(index) # contrast ratio at the beginning
+            else:
+                loc.insert(0, index)
+        tprev = result
+    
+    curses.init_pair(1, 0, bg)
+    if (-1 == bg):
+        tbg = '#' + ibgc
+    else:
+        tbg = ibgc
+
+    nline(stdscr)
+    stdscr.addstr(f"Normal 16 to 231 colours for background color {tbg} within contrast ratio {arg_crl} to {arg_crh}:", curses.color_pair(loc[0]))
+
+    stdscr.refresh()
+    nline(stdscr)
+
+    for index in loc:
+        xpos = curses.getsyx()[1]
+        if (xpos > ((curses.COLS//6)*6)-6):
+            nline(stdscr)
+        stdscr.addstr(f"{index:3d}   ", curses.color_pair(index))
         stdscr.refresh()
-        ypos = curses.getsyx()[0]
-        stdscr.move(ypos + 1, 0)
-        for i in loc:
-            xpos = curses.getsyx()[1]
-            if (xpos > ((curses.COLS//6)*6)-6):
-                ypos = curses.getsyx()[0]
-                stdscr.move(ypos + 1, 0)
-            stdscr.addstr(f"{i:3d}   ", curses.color_pair(i))
-            stdscr.refresh()
-    except curses.ERR:
-        # End of screen reached
-        pass
+    
+    nline(stdscr)
+    stdscr.addstr("Press 'q' to exit.")
 
     pk = "not q"
     while("q" != pk):
         pk = stdscr.getkey()
 
 
+def main():
+
+    oc_parser = argparse.ArgumentParser(prog='oc', description='Prints suitable foreground colors for specific background color.')
+    # nargs='?' -> One argument will be consumed from the command line if
+    # possible and produced as a single item. If no command-line argument is
+    # present, the value from default will be produced. 
+    oc_parser.add_argument('bg', action='store', type=str,
+               help='Accepts Background colour input, as (16 to 255) or Hex RGB e.g. 1d1f21')
+    oc_parser.add_argument('--crl', action='store', dest='arg_crl', default=4.5, type=float, metavar='crl',
+               help='lower limit of contrast ratio to be used')
+    oc_parser.add_argument('--crh', action='store', dest='arg_crh', default=7, type=float, metavar='crh',
+            help='upper limit of contrast ratio to be used')
+
+    args = oc_parser.parse_args()
+    bg = args.bg
+    arg_crl = args.arg_crl
+    arg_crh = args.arg_crh
+
+    curses.wrapper(cpu, bg, arg_crl, arg_crh)
+
+    
+
+
 
 if __name__ == "__main__":
-    curses.wrapper(main)
+    main()
 
 # Legacy code
 

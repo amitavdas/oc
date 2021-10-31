@@ -13,5 +13,19 @@ from 16-255.
 Currently the input background colour has to be within 16 to 231.\
 Support for RGB background colours should be added.
 
-It uses contrast ratio between 4.5 to 7 acceptable by default.\
-But these can be changed in the script.
+It has been configured to use contrast ratio within 4.5 to 7 as acceptable by\
+default.\
+
+```
+usage: oc [-h] [--crl crl] [--crh crh] bg
+
+Prints suitable foreground colors for specific background color.
+
+positional arguments:
+  bg          Accepts Background colour input, as (16 to 255) or Hex RGB e.g. 1d1f21
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --crl crl   lower limit of contrast ratio to be used
+  --crh crh   upper limit of contrast ratio to be used
+```
