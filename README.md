@@ -25,6 +25,6 @@ positional arguments:
 
 optional arguments:
   -h, --help  show this help message and exit
-  --crl crl   lower limit of contrast ratio to be used, 4.5 recommend (default)
+  --crl crl   lower limit of contrast ratio to be used, 4.5 recommended (default)
   --crh crh   upper limit of contrast ratio to be used, default 7, must be grater than crl
 ```

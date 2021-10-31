@@ -166,7 +166,7 @@ def main():
     oc_parser.add_argument('bg', action='store', type=str,
                help='Accepts Background colour input, as (16 to 255) or Hex RGB e.g. 1d1f21')
     oc_parser.add_argument('--crl', action='store', dest='arg_crl', default=4.5, type=float, metavar='crl',
-               help='lower limit of contrast ratio to be used, 4.5 recommend (default)')
+               help='lower limit of contrast ratio to be used, 4.5 recommended (default)')
     oc_parser.add_argument('--crh', action='store', dest='arg_crh', default=7, type=float, metavar='crh',
             help='upper limit of contrast ratio to be used, default 7, must be grater than crl')
 
