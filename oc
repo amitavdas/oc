@@ -3,6 +3,8 @@
 import argparse
 import curses
 
+bool_plcalc = False
+
 # bcs -> basic colour separator
 # converts palettes colours to 8 bit RGB
 def bcs(ic):
@@ -61,6 +63,15 @@ def lcalc(brgb):
     lum = 0.212655 * cgl(tr) + 0.715158 * cgl(tg) + 0.072187 * cgl(tb)
     return lum
 
+# convert relative luminance to Perceived lightness
+def plcalc(rlum):
+    delta = 6 / 29
+    if (rlum > pow(delta,3)):
+        return ((pow(rlum,(1/3)) * 116) - 16);
+    else:
+        fot = (rlum / (3 * pow(delta, 2))) + (4/29)
+        return ((fot * 116) - 16);
+
 # cc -> colour comparator
 def cc(bg_rgb, fg_rgb):
 
@@ -78,9 +89,24 @@ def cc(bg_rgb, fg_rgb):
         Y_d = Y_bg
 
     # print(f"{Y_b} {Y_d}")
-    result = (Y_b + 0.05) / (Y_d + 0.05)
+    result1 = (Y_b + 0.05) / (Y_d + 0.05)
 
-    return result
+    if bool_plcalc:
+        L_bg = plcalc(Y_bg)
+        L_fg = plcalc(Y_fg)
+
+        if (L_bg >= L_fg):
+            L_b = L_bg
+            L_d = L_fg
+        else:
+            L_b = L_fg
+            L_d = L_bg
+
+        result2 = (L_b + 0.05) / (L_d + 0.05)
+    else:
+        result2 = -1
+
+    return [result1, result2]
 
 # nline -> goes to next line at column 0
 def nline(stdscr):
@@ -110,25 +136,40 @@ def cpu(stdscr, ibgc, arg_crl, arg_crh):
     curses.use_default_colors()
     stdscr.clear()
 
-    loc = []
-    tprev = 0.0
+    # rloc -> list of colours according to relative luminance
+    rloc = []
+    # ploc -> list of colours according to perceived lightness
+    ploc = []
+    tprev0 = 0.0
+    tprev1 = 0.0
     for index in range(16,256):
         fg = index
         fg_rgb = pco(fg)
-        result = cc(bg_rgb, fg_rgb)
+        result0 = cc(bg_rgb, fg_rgb)[0]
         # Note: WCAG 2.0 requires the visual presentation of text
         # and images of text has a contrast ratio of at least 4.5:1 
         # Source: http://www.w3.org/TR/WCAG20/#contrast-ratiodef
         # this is the lower and upper bounds for contrast ratio of
         # the colours that will be printed
-        if ((arg_crl <= result) and (arg_crh >= result)):
+        if ((arg_crl <= result0) and (arg_crh >= result0)):
             curses.init_pair(index, fg, bg)
-            # loc -> list of colours
-            if (result <= tprev): # put the colour with highest
-                loc.append(index) # contrast ratio at the beginning
+            # descending order
+            if (result0 <= tprev0): # put the colour with highest
+                rloc.append(index) # contrast ratio at the beginning
             else:
-                loc.insert(0, index)
-        tprev = result
+                rloc.insert(0, index)
+        tprev0 = result0
+
+        if bool_plcalc:
+            result1 = cc(bg_rgb, fg_rgb)[1]
+            if ((arg_crl <= result1) and (arg_crh >= result1)):
+                curses.init_pair(index, fg, bg)
+                # descending order
+                if (result1 <= tprev1): # put the colour with highest
+                    ploc.append(index) # contrast ratio at the beginning
+                else:
+                    ploc.insert(0, index)
+            tprev1 = result1
     
     curses.init_pair(1, 0, bg)
     if (-1 == bg):
@@ -137,20 +178,34 @@ def cpu(stdscr, ibgc, arg_crl, arg_crh):
         tbg = ibgc
 
     nline(stdscr)
-    stdscr.addstr(f"Normal 16 to 231 colours for background colour {tbg} within contrast ratio {arg_crl} to {arg_crh}:", curses.color_pair(loc[0]))
+    stdscr.addstr(f"Foreground colours within 16 to 255 for background colour {tbg} within contrast ratio {arg_crl} to {arg_crh}:", curses.color_pair(rloc[0]))
 
     stdscr.refresh()
     nline(stdscr)
 
-    for index in loc:
+    for index in rloc:
         xpos = curses.getsyx()[1]
         if (xpos > ((curses.COLS//6)*6)-6):
             nline(stdscr)
         stdscr.addstr(f"{index:3d}   ", curses.color_pair(index))
         stdscr.refresh()
+
+    
+    if bool_plcalc:
+        nline(stdscr)
+        stdscr.addstr("According to Perceived lightness:", curses.color_pair(0))
+        stdscr.refresh()
+        nline(stdscr)
+        for index in ploc:
+            xpos = curses.getsyx()[1]
+            if (xpos > ((curses.COLS//6)*6)-6):
+                nline(stdscr)
+            stdscr.addstr(f"{index:3d}   ", curses.color_pair(index))
+            stdscr.refresh()
     
     nline(stdscr)
     stdscr.addstr("Press 'q' to exit.")
+    stdscr.refresh()
 
     pk = "not q"
     while("q" != pk):
