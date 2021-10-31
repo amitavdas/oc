@@ -3,15 +3,13 @@
 oc\
 Optimum Colour
 
-This is a small program.\
-Written in Python.\
-It prints list of suitable foreground colour candidets for a terminal with\
-given background colour in descending order based on contrast ratio (cr) as\
-defined by `WCAG 2.0`.\
+This program prints list of suitable foreground colour candidets for a terminal\
+with given background colour in descending order based on contrast ratio (cr)\
+as defined by `WCAG 2.0`.
 
-Nothing is Guaranteed to work. See License.\
+Nothing is Guaranteed to work. See License.
 
-**Only the colors in terminal's colour palette from `16 to 255` is considered.**\
+**Only the colors in terminal's colour palette from `16 to 255` is considered.**
 
 It uses the terminal's colour palette for this task.\
 So it takes a background colour e.g. `./oc 200` or `./oc 1d1f21` and then\
@@ -19,13 +17,13 @@ prints suitable colours from `16 to 255`.
 
 **Background color can be 16 to 255** in terminal's colour palette.\
 Additionaly **RGB hex vaule as background colour can be used**.\
-This is because many terminal emulators support setting custom background color.\
+This is because many terminal emulators support setting custom background color.
 
 The user still has to select which colour they want to use.\
 Because colour preference varies a lot person to person.\
 There can still be some colours that look good but are outside\
 default `cr` range.\
-So it my be of interest to adjust `cr` range according to personal preference. \
+So it my be of interest to adjust `cr` range according to personal preference.
 
 Note: Default `cr` range `4.5 to 7`.\
 A lower limit of at least `4.5` is recommended by `WCAG 2.0`.\
