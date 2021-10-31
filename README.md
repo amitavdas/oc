@@ -11,8 +11,8 @@ So it takes a background colour e.g. `./oc 200` or `./oc 1d1f21` and then\
 prints suitable colours from 16 to 255.
 
 It has been configured to use contrast ratio within 4.5 to 7 by\
-default.
-At least 4.5 is recommended.
+default.\
+At least 4.5 is recommended.\
 Source: http://www.w3.org/TR/WCAG20/#contrast-ratiodef
 
 ```
