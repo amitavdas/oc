@@ -18,7 +18,7 @@ default.\
 ```
 usage: oc [-h] [--crl crl] [--crh crh] bg
 
-Prints suitable foreground colors for specific background color.
+Prints suitable foreground colours for specific background colour.
 
 positional arguments:
   bg          Accepts Background colour input, as (16 to 255) or Hex RGB e.g. 1d1f21

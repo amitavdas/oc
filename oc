@@ -4,7 +4,7 @@ import argparse
 import curses
 
 # bcs -> basic colour separator
-# converts palettes colors to 8 bit RGB
+# converts palettes colours to 8 bit RGB
 def bcs(ic):
     # ic -> input colour
     # source: https://stackoverflow.com/a/27165165 
@@ -103,7 +103,7 @@ def cpu(stdscr, ibgc, arg_crl, arg_crh):
         g = int(ibgc[2:4], 16)
         b = int(ibgc[4:],  16)
         bg_rgb = [r, g, b]
-        bg = -1 # the preferred color may not be showable
+        bg = -1 # the preferred colour may not be showable
 
 
     # Clear screen
@@ -124,7 +124,7 @@ def cpu(stdscr, ibgc, arg_crl, arg_crh):
         if ((arg_crl <= result) and (arg_crh >= result)):
             curses.init_pair(index, fg, bg)
             # loc -> list of colours
-            if (result <= tprev): # put the color with highest
+            if (result <= tprev): # put the colour with highest
                 loc.append(index) # contrast ratio at the beginning
             else:
                 loc.insert(0, index)
@@ -137,7 +137,7 @@ def cpu(stdscr, ibgc, arg_crl, arg_crh):
         tbg = ibgc
 
     nline(stdscr)
-    stdscr.addstr(f"Normal 16 to 231 colours for background color {tbg} within contrast ratio {arg_crl} to {arg_crh}:", curses.color_pair(loc[0]))
+    stdscr.addstr(f"Normal 16 to 231 colours for background colour {tbg} within contrast ratio {arg_crl} to {arg_crh}:", curses.color_pair(loc[0]))
 
     stdscr.refresh()
     nline(stdscr)
@@ -159,7 +159,7 @@ def cpu(stdscr, ibgc, arg_crl, arg_crh):
 
 def main():
 
-    oc_parser = argparse.ArgumentParser(prog='oc', description='Prints suitable foreground colors for specific background color.')
+    oc_parser = argparse.ArgumentParser(prog='oc', description='Prints suitable foreground colours for specific background colour.')
     # nargs='?' -> One argument will be consumed from the command line if
     # possible and produced as a single item. If no command-line argument is
     # present, the value from default will be produced. 
@@ -183,17 +183,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# Legacy code
-
-#def main():
-#    print("Pass if above 4.5 for (12pt or smaller) or 3.0 (for larger)")
-#    # print("Contrast ratio: ", result)
-#    for fg in range(16,256):
-#        result = cc(fg, 234)
-#        if ((4.5 <= result) and (7 >= result)):
-#            #print(f"{fg:03d}. Contrast ratio: {result:.02f}")
-#            fg_str = str(fg)
-#            cmd = 'printf \'%s\' \"    $(tput setaf ' + fg_str + ') ' + fg_str + '\"'
-#            os.system(cmd)
-
