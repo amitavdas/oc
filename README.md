@@ -23,7 +23,7 @@ default `cr` range.\
 So it my be of interest to adjust `cr` range according to personal preference.
 
 **Note:** `--pl` option is not based on **WCAG 2.0**\
-That was added out of curiosity only and is not recommended for use.
+That was added out of curiosity only and is not recommended for use.\
 It uses Perceived lightness in place of luminance using same formula\
 for calculating contrast ratio.
 
