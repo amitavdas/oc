@@ -214,6 +214,8 @@ def cpu(stdscr, ibgc, arg_crl, arg_crh):
 
 def main():
 
+    global bool_plcalc
+    
     oc_parser = argparse.ArgumentParser(prog='oc', description='Prints suitable foreground colours for specific background colour.')
     # nargs='?' -> One argument will be consumed from the command line if
     # possible and produced as a single item. If no command-line argument is
@@ -224,11 +226,15 @@ def main():
                help='lower limit of contrast ratio to be used, 4.5 recommended (default)')
     oc_parser.add_argument('--crh', action='store', dest='arg_crh', default=7, type=float, metavar='crh',
             help='upper limit of contrast ratio to be used, default 7, must be grater than crl')
+    oc_parser.add_argument('--pl', action='store_true', dest='bool_plcalc',
+            help='Show colors according to Perceived lightness')
+
 
     args = oc_parser.parse_args()
     bg = args.bg
     arg_crl = args.arg_crl
     arg_crh = args.arg_crh
+    bool_plcalc = args.bool_plcalc
 
     curses.wrapper(cpu, bg, arg_crl, arg_crh)
 
