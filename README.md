@@ -16,8 +16,7 @@ This is because many terminal emulators support setting custom background colour
 
 The user still has to select which colour they want to use.\
 Because colour preference varies a lot person to person.\
-There may still be some good-looking colours that fall outside\
-default `cr` range.\
+There may still be some good-looking colours that fall outside default `cr` range.\
 So it my be of interest to adjust `cr` range according to personal preference.
 
 **Note**: Default `cr` range `4.5 to 7`.\
