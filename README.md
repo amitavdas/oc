@@ -16,16 +16,11 @@ This is because many terminal emulators support setting custom background colour
 
 The user still has to select which colour they want to use.\
 Because colour preference varies a lot person to person.\
-There can still be some colours that look good but are outside\
+There may still be some good-looking colours that fall outside\
 default `cr` range.\
 So it my be of interest to adjust `cr` range according to personal preference.
 
-**Note:** `--pl` option is not based on **WCAG 2.0**\
-That was added out of curiosity only and is not recommended for use.\
-It uses Perceived lightness in place of luminance using same formula\
-for calculating contrast ratio.
-
-Note: Default `cr` range `4.5 to 7`.\
+**Note**: Default `cr` range `4.5 to 7`.\
 A lower limit of at least `4.5` is recommended by **WCAG 2.0**.\
 Source: http://www.w3.org/TR/WCAG20/#contrast-ratiodef
 
