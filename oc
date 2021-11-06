@@ -4,6 +4,7 @@ import argparse
 import curses
 
 bool_plcalc = False
+bool_debug = False
 
 # bcs -> basic colour separator
 # converts palettes colours to 8 bit RGB
@@ -33,7 +34,6 @@ def pco(ic):
 
     return result
 
-
 # Convert a Gamma encoded RGB to a Linear value
 # iv -> input value
 def cgl(iv):
@@ -50,7 +50,6 @@ def cgl(iv):
     else:
         result = (pow((( iv + 0.055)/1.055),2.4))
     return result
-
 
 # lcalc -> luminance (Y) calculator
 # luminance and Perceived lightness are NOT the same
@@ -89,29 +88,126 @@ def cc(bg_rgb, fg_rgb):
         Y_d = Y_bg
 
     # print(f"{Y_b} {Y_d}")
-    result1 = (Y_b + 0.05) / (Y_d + 0.05)
+    result = (Y_b + 0.05) / (Y_d + 0.05)
 
-    if bool_plcalc:
-        L_bg = plcalc(Y_bg)
-        L_fg = plcalc(Y_fg)
+    return result
 
-        if (L_bg >= L_fg):
-            L_b = L_bg
-            L_d = L_fg
-        else:
-            L_b = L_fg
-            L_d = L_bg
+def mk_rl_lst(bg_rgb, arg_crl, arg_crh):
 
-        result2 = (L_b + 0.05) / (L_d + 0.05)
-    else:
-        result2 = -1
+    rl = []
+    rl_fg = []
+    rl_fg_rgb = []
+    urll = []
+    tprev = 0.0
+    for index in range(16,256):
+        fg = index
+        fg_rgb = pco(fg)
+        result = cc(bg_rgb, fg_rgb)
+        # Note: WCAG 2.0 requires the visual presentation of text
+        # and images of text has a contrast ratio of at least 4.5:1 
+        # Source: http://www.w3.org/TR/WCAG20/#contrast-ratiodef
+        # this is the lower and upper bounds for contrast ratio of
+        # the colours that will be printed
+        if ((arg_crl <= result) and (arg_crh >= result)):
+            rl.append(result)
+            rl_fg.append(fg)
+            rl_fg_rgb.append(fg_rgb)
+            # urll -> unsorted list of colours according to relative luminance
+            # needed for debug
+            urll.append((result, fg, fg_rgb))
 
-    return [result1, result2]
+    # rll -> list of colours according to relative luminance
+    # sorted in descending order
+    rll = sorted(zip(rl, rl_fg, rl_fg_rgb), reverse=True)
+
+
+    return [rll, urll]
 
 # nline -> goes to next line at column 0
 def nline(stdscr):
     ypos = curses.getsyx()[0]
     stdscr.move(ypos + 1, 0)
+
+# prll -> print relative luminance list
+def prll(stdscr, rll, bg):
+
+    _, fg_list, _ = zip(*rll)
+
+    for fg in fg_list:
+
+        curses.init_pair(fg, fg, bg)
+
+        xpos = curses.getsyx()[1]
+        if (xpos > ((curses.COLS//6)*6)-6):
+            nline(stdscr)
+        stdscr.addstr(f"{fg:3d}   ", curses.color_pair(fg))
+        stdscr.refresh()
+    return
+
+# praw -> print raw
+def praw(stdscr, sltp, usltp, topic):
+
+    nline(stdscr)
+    stdscr.refresh()
+
+    stdscr.addstr(f"sorted list {topic}:")
+    stdscr.refresh()
+
+    nline(stdscr)
+    stdscr.addstr(f"{sltp}")
+    stdscr.refresh()
+
+    nline(stdscr)
+    stdscr.refresh()
+    stdscr.addstr(f"unsorted list {topic}:")
+    stdscr.refresh()
+    nline(stdscr)
+    stdscr.refresh()
+
+    stdscr.addstr(f"{usltp}")
+    stdscr.refresh()
+
+    return
+
+
+# ppll -> print Perceived lightness list
+#def ppll(stdscr, rll, bg, bg_rgb):
+#    rl_list, fg_list, fg_bg_list = zip(*rll)
+#
+#    Y_bg = lcalc(bg_rgb)
+#    pl_list = []
+#
+#    for Y_fg in rl_list:
+#        L_bg = plcalc(Y_bg)
+#        L_fg = plcalc(Y_fg)
+#
+#        if (L_bg >= L_fg):
+#            L_b = L_bg
+#            L_d = L_fg
+#        else:
+#            L_b = L_fg
+#            L_d = L_bg
+#
+#        pl = (L_b + 0.05) / (L_d + 0.05)
+#        pl_list.append(pl)
+#
+#        stdscr.addstr(f"{pl} ")
+#
+#    upll = zip(pl_list, fg_list, fg_bg_list)
+#    pll = sorted(zip(pl_list, fg_list, fg_bg_list), reverse=True)
+#
+#    pl_list, pl_fg_list, fg_bg_list = zip(*pll)
+#
+#    for fg in pl_fg_list:
+#
+#        curses.init_pair(fg, fg, bg)
+#
+#        xpos = curses.getsyx()[1]
+#        if (xpos > ((curses.COLS//6)*6)-6):
+#            nline(stdscr)
+#        stdscr.addstr(f"{fg:3d}   ", curses.color_pair(fg))
+#        stdscr.refresh()
+#    return [pll, upll]
 
 def cpu(stdscr, ibgc, arg_crl, arg_crh):
 
@@ -119,7 +215,6 @@ def cpu(stdscr, ibgc, arg_crl, arg_crh):
         int_bg = int(ibgc)
     except ValueError:
         int_bg = int(ibgc, 16)
-
 
     if ((int_bg >= 16) and (int_bg <= 255)):
         bg_rgb = pco(int_bg)
@@ -131,90 +226,54 @@ def cpu(stdscr, ibgc, arg_crl, arg_crh):
         bg_rgb = [r, g, b]
         bg = -1 # the preferred colour may not be showable
 
+    rll , urll = mk_rl_lst(bg_rgb, arg_crl, arg_crh)
 
     # Clear screen
     curses.use_default_colors()
     stdscr.clear()
 
-    # rloc -> list of colours according to relative luminance
-    rloc = []
-    # ploc -> list of colours according to perceived lightness
-    ploc = []
-    tprev0 = 0.0
-    tprev1 = 0.0
-    for index in range(16,256):
-        fg = index
-        fg_rgb = pco(fg)
-        result0 = cc(bg_rgb, fg_rgb)[0]
-        # Note: WCAG 2.0 requires the visual presentation of text
-        # and images of text has a contrast ratio of at least 4.5:1 
-        # Source: http://www.w3.org/TR/WCAG20/#contrast-ratiodef
-        # this is the lower and upper bounds for contrast ratio of
-        # the colours that will be printed
-        if ((arg_crl <= result0) and (arg_crh >= result0)):
-            curses.init_pair(index, fg, bg)
-            # descending order
-            if (result0 <= tprev0): # put the colour with highest
-                rloc.append(index) # contrast ratio at the beginning
-            else:
-                rloc.insert(0, index)
-        tprev0 = result0
-
-        if bool_plcalc:
-            result1 = cc(bg_rgb, fg_rgb)[1]
-            if ((arg_crl <= result1) and (arg_crh >= result1)):
-                curses.init_pair(index, fg, bg)
-                # descending order
-                if (result1 <= tprev1): # put the colour with highest
-                    ploc.append(index) # contrast ratio at the beginning
-                else:
-                    ploc.insert(0, index)
-            tprev1 = result1
-    
-    curses.init_pair(1, 0, bg)
+#   curses.init_pair(1, 0, bg)
     if (-1 == bg):
         tbg = '#' + ibgc
     else:
         tbg = ibgc
 
     nline(stdscr)
-    stdscr.addstr(f"Foreground colours within 16 to 255 for background colour {tbg} within contrast ratio {arg_crl} to {arg_crh}:", curses.color_pair(rloc[0]))
-
     stdscr.refresh()
+
+    stdscr.addstr(f"Foreground colours within 16 to 255 for background colour {tbg} within contrast ratio {arg_crl} to {arg_crh}:", curses.color_pair(0))
     nline(stdscr)
 
-    for index in rloc:
-        xpos = curses.getsyx()[1]
-        if (xpos > ((curses.COLS//6)*6)-6):
-            nline(stdscr)
-        stdscr.addstr(f"{index:3d}   ", curses.color_pair(index))
+    stdscr.refresh()
+
+    prll(stdscr, rll, bg)
+    stdscr.refresh()
+
+    if bool_debug:
+        praw(stdscr, rll, urll, 'relative luminance')
         stdscr.refresh()
 
-    
-    if bool_plcalc:
-        nline(stdscr)
-        stdscr.addstr("According to Perceived lightness:", curses.color_pair(0))
-        stdscr.refresh()
-        nline(stdscr)
-        for index in ploc:
-            xpos = curses.getsyx()[1]
-            if (xpos > ((curses.COLS//6)*6)-6):
-                nline(stdscr)
-            stdscr.addstr(f"{index:3d}   ", curses.color_pair(index))
-            stdscr.refresh()
-    
-    nline(stdscr)
-    stdscr.addstr("Press 'q' to exit.")
-    stdscr.refresh()
+
+   #if bool_plcalc:
+
+   #    nline(stdscr)
+   #    stdscr.addstr("According to Perceived lightness:", curses.color_pair(0))
+   #    stdscr.refresh()
+   #    nline(stdscr)
+   #    stdscr.refresh()
+
+   #    pll, upll = ppll(stdscr, rll, bg, bg_rgb)
 
     pk = "not q"
     while("q" != pk):
         pk = stdscr.getkey()
+    return 0
 
 
 def main():
 
-    global bool_plcalc
+#   global bool_plcalc
+    global bool_debug
     
     oc_parser = argparse.ArgumentParser(prog='oc', description='Prints suitable foreground colours for specific background colour.')
     # nargs='?' -> One argument will be consumed from the command line if
@@ -226,21 +285,19 @@ def main():
                help='lower limit of contrast ratio to be used, 4.5 recommended (default)')
     oc_parser.add_argument('--crh', action='store', dest='arg_crh', default=7, type=float, metavar='crh',
             help='upper limit of contrast ratio to be used, default 7, must be grater than crl')
-    oc_parser.add_argument('--pl', action='store_true', dest='bool_plcalc',
-            help='Show colors according to Perceived lightness')
-
+#   oc_parser.add_argument('--pl', action='store_true', dest='bool_plcalc',
+#           help='Show colors according to Perceived lightness')
+    oc_parser.add_argument('--debug', action='store_true', dest='bool_debug',
+            help='Show debugging information')
 
     args = oc_parser.parse_args()
     bg = args.bg
     arg_crl = args.arg_crl
     arg_crh = args.arg_crh
-    bool_plcalc = args.bool_plcalc
+#   bool_plcalc = args.bool_plcalc
+    bool_debug = args.bool_debug
 
     curses.wrapper(cpu, bg, arg_crl, arg_crh)
-
-    
-
-
 
 if __name__ == "__main__":
     main()
