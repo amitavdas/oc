@@ -4,17 +4,15 @@
 candidates for foreground colour of a terminal with given background colour in\
 descending order based on contrast ratio (cr) as defined by **WCAG 2.0**.
 
-Nothing is Guaranteed to work. See License.
-
-**Only the colors in terminal's colour palette from** `16 to 255` **is considered.**
+**Only the colours in terminal's colour palette from** `16 to 255` **is considered.**
 
 It uses the terminal's colour palette for this task.\
 So it takes a background colour e.g. `./oc 200` or `./oc 1d1f21` and then\
 prints suitable colours from `16 to 255`.
 
-**Background color can be** `16 to 255` in terminal's colour palette.\
+**Background colour can be** `16 to 255` in terminal's colour palette.\
 Additionally **RGB hex value as background colour can be used**.\
-This is because many terminal emulators support setting custom background color.
+This is because many terminal emulators support setting custom background colour.
 
 The user still has to select which colour they want to use.\
 Because colour preference varies a lot person to person.\
@@ -32,7 +30,7 @@ A lower limit of at least `4.5` is recommended by **WCAG 2.0**.\
 Source: http://www.w3.org/TR/WCAG20/#contrast-ratiodef
 
 ```
-usage: oc [-h] [--crl crl] [--crh crh] [--pl] bg
+usage: oc [-h] [--crl crl] [--crh crh] [--debug] bg
 
 Prints suitable foreground colours for specific background colour.
 
@@ -43,5 +41,5 @@ optional arguments:
   -h, --help  show this help message and exit
   --crl crl   lower limit of contrast ratio to be used, 4.5 recommended (default)
   --crh crh   upper limit of contrast ratio to be used, default 7, must be grater than crl
-  --pl        Show colors according to Perceived lightness
+  --debug     Show debugging information
 ```
