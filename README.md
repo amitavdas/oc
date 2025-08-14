@@ -24,6 +24,7 @@ A lower limit of at least `4.5` is recommended by **WCAG 2.0**.\
 Source: http://www.w3.org/TR/WCAG20/#contrast-ratiodef
 
 ```
+
 usage: oc [-h] [--crl crl] [--crh crh] [--debug] bg
 
 Prints suitable foreground colours for specific background colour.
